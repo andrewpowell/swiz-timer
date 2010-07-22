@@ -17,3 +17,5 @@ dispatchEvent(tmEvent);
 
 var tmEvent:TimerManagementEvent = new TimerManagementEvent(TimerManagementEvent.RESET_TIMER,"exampleOne");
 dispatchEvent(tmEvent);
+
+Namespace URL:  http://timer.swizframework.org
