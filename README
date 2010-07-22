@@ -1,0 +1,19 @@
+This is the custom metadata processor for [Scheduled] metadata.
+
+USAGE:
+
+[Scheduled("5000")]
+
+[Scheduled(delay="5000")]
+
+[Scheduled(delay="5000", repeatCount="5")]
+
+Use the TimerManagementEvent to stop or reset the timer for a given function name.
+
+USAGE:
+
+var tmEvent:TimerManagementEvent = new TimerManagementEvent(TimerManagementEvent.STOP_TIMER,"exampleOne");
+dispatchEvent(tmEvent);
+
+var tmEvent:TimerManagementEvent = new TimerManagementEvent(TimerManagementEvent.RESET_TIMER,"exampleOne");
+dispatchEvent(tmEvent);
