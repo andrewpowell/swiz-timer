@@ -1,100 +1,129 @@
 package org.swizframework.processors {
+import flash.events.TimerEvent;
+import flash.utils.Dictionary;
+import flash.utils.Timer;
 
-    import flash.events.TimerEvent;
+import org.swizframework.core.Bean;
+import org.swizframework.events.TimerManagementEvent;
+import org.swizframework.metadata.ScheduledMetadataTag;
+import org.swizframework.reflection.IMetadataTag;
 
-    import flash.utils.Dictionary;
-    import flash.utils.Timer;
+public class ScheduledProcessor extends BaseMetadataProcessor {
 
-    import org.swizframework.core.Bean;
-    import org.swizframework.metadata.ScheduledMetadataTag;
-    import org.swizframework.reflection.IMetadataTag;
+    private var _timers:Dictionary = new Dictionary();
+    private var _isSetup:Boolean = false;
 
-    public class ScheduledProcessor extends BaseMetadataProcessor {
+    public function ScheduledProcessor() {
+        super(["Scheduled"], ScheduledMetadataTag);
+    }
 
-        private var _timers:Dictionary = new Dictionary();
+    protected function setup():void {
+        swiz.dispatcher.addEventListener(TimerManagementEvent.RESTART_TIMER, onTimerRestart);
+        swiz.dispatcher.addEventListener(TimerManagementEvent.STOP_TIMER, onTimerStop);
+        this._isSetup = true;
+    }
 
-        public function ScheduledProcessor() {
-            super(["Scheduled"], ScheduledMetadataTag);
-        }
+    /**
+     * Executed when a new [Scheduled] metadata tag is found
+     */
+    override public function setUpMetadataTag(metadataTag:IMetadataTag, bean:Bean):void {
+        var scheduled:ScheduledMetadataTag = ScheduledMetadataTag(metadataTag);
+        var method:Function = bean.source[ metadataTag.host.name ] as Function;
 
-        /**
-		 * Executed when a new [Scheduled] metadata tag is found
-		 */
-		override public function setUpMetadataTag( metadataTag:IMetadataTag, bean:Bean ):void
-		{
-			var scheduled:ScheduledMetadataTag = ScheduledMetadataTag( metadataTag );
-			var method:Function = bean.source[ metadataTag.host.name ] as Function;
+        setupTimer(scheduled, method);
 
-            setupTimer(scheduled,method);
-
-		}
-
-		/**
-		 * Executed when a [Scheduled] metadata tag has been removed
-		 */
-		override public function tearDownMetadataTag(metadataTag:IMetadataTag, bean:Bean):void
-		{
-			var scheduled:ScheduledMetadataTag = ScheduledMetadataTag( metadataTag );
-			var method:Function = bean.source[ metadataTag.host.name ] as Function;
-
-            removeTimer(scheduled,method);
-
-		}
-
-        protected function setupTimer(scheduled:ScheduledMetadataTag,method:Function):void{
-            var timer:Timer = new Timer(scheduled.delay,scheduled.repeatCount);
-            var timerMetadata:TimerMetadata = new TimerMetadata();
-            timer.addEventListener(TimerEvent.TIMER,handleTimer);
-            timer.start();
-            timerMetadata.callback=method;
-            timerMetadata.tag=scheduled;
-            timerMetadata.timer=timer;
-            this._timers[scheduled.host.name]=timerMetadata;
-        }
-
-        protected function removeTimer(scheduled:ScheduledMetadataTag,method:Function):void{
-            for each (var o:TimerMetadata in _timers){
-                if(scheduled.host.name==o.tag.name){
-                    if(o.timer.currentCount==o.tag.repeatCount){
-                        stopAndRemoveTimer(o);
-                    }
-                    break;
-                }
-            }
-        }
-
-        protected function handleTimer(event:TimerEvent):void{
-            var timer:Timer = event.target as Timer;
-
-            for each (var o:TimerMetadata in _timers){
-                if(timer==o.timer){
-                    if(timer.currentCount==o.tag.repeatCount){
-                        stopAndRemoveTimer(o);
-                    }
-
-                    var f:Function = o.callback as Function;
-                    f.call();
-                    break;
-                }
-            }
-        }
-
-        private function stopAndRemoveTimer(timerMetadata:TimerMetadata):void{
-            timerMetadata.timer.stop();
-            timerMetadata.timer.removeEventListener(TimerEvent.TIMER,handleTimer);
-            timerMetadata.timer=null;
-            delete _timers[timerMetadata.tag.host.name];            
-        }
-
+        if (!this._isSetup)
+            setup();
 
     }
+
+    /**
+     * Executed when a [Scheduled] metadata tag has been removed
+     */
+    override public function tearDownMetadataTag(metadataTag:IMetadataTag, bean:Bean):void {
+        var scheduled:ScheduledMetadataTag = ScheduledMetadataTag(metadataTag);
+        var method:Function = bean.source[ metadataTag.host.name ] as Function;
+
+        removeTimer(scheduled, method);
+
+    }
+
+    protected function setupTimer(scheduled:ScheduledMetadataTag, method:Function):void {
+        var timer:Timer = new Timer(scheduled.delay, scheduled.repeatCount);
+        var timerMetadata:TimerMetadata = new TimerMetadata();
+        timer.addEventListener(TimerEvent.TIMER, handleTimer);
+        timer.start();
+        timerMetadata.callback = method;
+        timerMetadata.tag = scheduled;
+        timerMetadata.timer = timer;
+        this._timers[scheduled.host.name] = timerMetadata;
+    }
+
+    protected function removeTimer(scheduled:ScheduledMetadataTag, method:Function):void {
+        for each (var o:TimerMetadata in _timers) {
+            if (scheduled.host.name == o.tag.name) {
+                if (o.timer.currentCount == o.tag.repeatCount) {
+                    stopAndRemoveTimer(o);
+                }
+                break;
+            }
+        }
+    }
+
+    protected function handleTimer(event:TimerEvent):void {
+        var timer:Timer = event.target as Timer;
+
+        for each (var o:TimerMetadata in _timers) {
+            if (timer == o.timer) {
+                if (timer.currentCount == o.tag.repeatCount) {
+                    stopAndRemoveTimer(o);
+                }
+
+                var f:Function = o.callback as Function;
+                f.call();
+                break;
+            }
+        }
+    }
+
+    protected function onTimerRestart(event:TimerManagementEvent):void {
+
+        for each (var o:TimerMetadata in _timers) {
+            if (event.functionName == o.tag.host.name) {
+                o.timer.reset();
+                break;
+            }
+        }
+
+    }
+
+    protected function onTimerStop(event:TimerManagementEvent):void {
+
+        for each (var o:TimerMetadata in _timers) {
+            if (event.functionName == o.tag.host.name) {
+                o.timer.stop();
+                break;
+            }
+        }
+
+    }
+
+    private function stopAndRemoveTimer(timerMetadata:TimerMetadata):void {
+        timerMetadata.timer.stop();
+        timerMetadata.timer.removeEventListener(TimerEvent.TIMER, handleTimer);
+        timerMetadata.timer = null;
+        delete _timers[timerMetadata.tag.host.name];
+    }
+
+
+}
 }
 
 import flash.utils.Timer;
 
 import org.swizframework.metadata.ScheduledMetadataTag;
 
-class TimerMetadata{
+class TimerMetadata {
 
     public var tag:ScheduledMetadataTag;
     public var timer:Timer;
