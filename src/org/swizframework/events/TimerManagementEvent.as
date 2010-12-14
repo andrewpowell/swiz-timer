@@ -1,9 +1,7 @@
 package org.swizframework.events {
 import flash.events.Event;
 
-import org.swizframework.utils.chain.EventChainStep;
-
-public class TimerManagementEvent extends EventChainStep {
+public class TimerManagementEvent extends Event	 {
 
     public static const STOP_TIMER:String = "org.swizframework.events.TimerManagementEvent.STOP_TIMER";
     public static const RESTART_TIMER:String = "org.swizframework.events.TimerManagementEvent.RESTART_TIMER";

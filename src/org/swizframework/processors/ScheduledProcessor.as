@@ -10,7 +10,7 @@ import org.swizframework.reflection.IMetadataTag;
 
 public class ScheduledProcessor extends BaseMetadataProcessor {
 
-    private var _timers:Dictionary = new Dictionary();
+    public var timers:Dictionary = new Dictionary();
     private var _isSetup:Boolean = false;
 
     public function ScheduledProcessor() {
@@ -56,11 +56,11 @@ public class ScheduledProcessor extends BaseMetadataProcessor {
         timerMetadata.callback = method;
         timerMetadata.tag = scheduled;
         timerMetadata.timer = timer;
-        this._timers[scheduled.host.name] = timerMetadata;
+        this.timers[scheduled.host.name] = timerMetadata;
     }
 
     protected function removeTimer(scheduled:ScheduledMetadataTag, method:Function):void {
-        for each (var o:TimerMetadata in _timers) {
+        for each (var o:TimerMetadata in timers) {
             if (scheduled.host.name == o.tag.name) {
                 if (o.timer.currentCount == o.tag.repeatCount) {
                     stopAndRemoveTimer(o);
@@ -73,11 +73,16 @@ public class ScheduledProcessor extends BaseMetadataProcessor {
     protected function handleTimer(event:TimerEvent):void {
         var timer:Timer = event.target as Timer;
 
-        for each (var o:TimerMetadata in _timers) {
+        for each (var o:TimerMetadata in timers) {
             if (timer == o.timer) {
                 if (timer.currentCount == o.tag.repeatCount) {
                     stopAndRemoveTimer(o);
                 }
+				else
+				{
+					timer.delay = o.tag.delay;
+					timer.repeatCount = o.tag.repeatCount;
+				}
 
                 var f:Function = o.callback as Function;
                 f.call();
@@ -88,7 +93,7 @@ public class ScheduledProcessor extends BaseMetadataProcessor {
 
     protected function onTimerRestart(event:TimerManagementEvent):void {
 
-        for each (var o:TimerMetadata in _timers) {
+        for each (var o:TimerMetadata in timers) {
             if (event.functionName == o.tag.host.name) {
                 o.timer.reset();
                 break;
@@ -99,7 +104,7 @@ public class ScheduledProcessor extends BaseMetadataProcessor {
 
     protected function onTimerStop(event:TimerManagementEvent):void {
 
-        for each (var o:TimerMetadata in _timers) {
+        for each (var o:TimerMetadata in timers) {
             if (event.functionName == o.tag.host.name) {
                 o.timer.stop();
                 break;
@@ -112,7 +117,7 @@ public class ScheduledProcessor extends BaseMetadataProcessor {
         timerMetadata.timer.stop();
         timerMetadata.timer.removeEventListener(TimerEvent.TIMER, handleTimer);
         timerMetadata.timer = null;
-        delete _timers[timerMetadata.tag.host.name];
+        delete timers[timerMetadata.tag.host.name];
     }
 
 
