@@ -6,8 +6,9 @@ package org.swizframework.metadata {
     public class ScheduledMetadataTag extends BaseMetadataTag {
 
 
-        protected var _delay        :Number = -1;
-        protected var _repeatCount  :Number = 0;
+        private var _delay        :Number = -1;
+
+        private var _repeatCount  :Number = 0;
 
         public function ScheduledMetadataTag() {
             super();
@@ -18,10 +19,20 @@ package org.swizframework.metadata {
         public function get delay():Number {
             return _delay;
         }
+		
+		public function set delay(value:Number):void
+		{
+			_delay = value;
+		}
 
         public function get repeatCount():Number {
             return _repeatCount;
         }
+		
+		public function set repeatCount(value:Number):void
+		{
+			_repeatCount = value;
+		}
 
         override public function copyFrom( metadataTag:IMetadataTag ):void
 		{

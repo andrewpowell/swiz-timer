@@ -19,3 +19,28 @@ var tmEvent:TimerManagementEvent = new TimerManagementEvent(TimerManagementEvent
 dispatchEvent(tmEvent);
 
 Namespace URL:  http://timer.swizframework.org
+
+
+
+Changed by TJ Downes (12/14/2010):
+Modified for Swiz 1.0. TimerManagementEvent used to extend EventChainStep, which was incompatible with Swiz 1.0
+
+Also added capability to change schedules at runtime Before doing this, you must name your processor in your configuration: 
+
+<swiz:customProcessors>
+    <processors:ScheduledProcessor id="schedules" xmlns:processors="org.swizframework.processors.*"/>
+</swiz:customProcessors>
+
+
+example showing how to change schedule at runtime:
+
+var interval:Number = 2 //minutes
+
+var app:MyApp = FlexGlobals.topLevelApplication as MyApp;
+
+app.schedules.timers['NameOfFunctionUsedForSchedule'].tag.delay = interval*60*1000;
+
+var event:TimerManagementEvent = new TimerManagementEvent(TimerManagementEvent.RESTART_TIMER, 'NameOfFunctionUsedForSchedule');
+
+swizdispatcher.dispatchEvent(event);
+
